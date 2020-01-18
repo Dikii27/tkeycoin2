@@ -13,7 +13,7 @@ Currently, the binary version of the Tkeycoin software is only available for the
 
 For the easiest deployment of Tkeycoin network 1.0, please use tkeycoin/tkeycoin image file: https://hub.docker.com/u/tkeycoin
 
-### Integration of Tkeycoin 1.0 with your exchange
+## Integration of Tkeycoin 1.0 with your exchange
 
 Connect to the server via ssh and execute commands:
 
@@ -64,8 +64,8 @@ The new TKEY 2.0 Protocol is currently being actively developed. This repository
 - Mining Algorithm: mPoW
 - nChains: 10
 - Default nChain: zero
-- Subunits: CryptoGramm (crg)
-- Example, 1 TKEY = 100 000 000 crg, 1 mTKEY = 100 000 crg, 1 uTKEY = 100 crg
+- Subunits: CryptoGramm (CGR)
+- Example, 1 TKEY = 100 000 000 CGR, 1 mTKEY = 100 000 CGR, 1 uTKEY = 100 CGR
 
 
 ## About this Project
