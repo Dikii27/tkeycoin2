@@ -38,6 +38,8 @@ After launch, a full node will start sync of blocks to check the synchronization
 
 Tkeycoin supports all popular RPC bitcoin commands
 
+List of commands for Tkeycoin Daemon - https://helpdesk.tkeycoin.com/article/65-list-of-commands-for-tkeycoin-daemon
+
 
 ## Development Process
 
