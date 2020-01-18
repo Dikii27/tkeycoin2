@@ -1,0 +1,8 @@
+# Idea family IDE
+.idea/
+
+# Cmake tools
+build/
+
+# Documentations
+/doc/doxygen/

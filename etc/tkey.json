@@ -1,0 +1,47 @@
+{
+	"core": {
+		"workers":"auto",
+		"workdir": "/home/blockchain/.tkeycoin2"
+	},
+	"transports": {
+		"protocol":{
+			"type": "http",
+			"host": "0.0.0.0",
+			"port": 2445
+		}
+	},
+	"addresses": {
+		"path": "/home/blockchain/.tkeycoin2/addresses.dat",
+		"storageTime": 2592000,
+		"addressCapacity": 50000,
+		"bannedCapacity": 1000
+	},
+	"blockchain":{
+		"magic": "544b6579//TKey",
+		"genesis":"0000000059a2b0c0309ff6ed14c2510285c8ecc7a6f55d9d4d42d5ef2f32f575",
+		"root":[
+			"node1.tkeycoin.com",
+			"node2.tkeycoin.com",
+			"node3.tkeycoin.com",
+			"node4.tkeycoin.com",
+			"node5.tkeycoin.com"
+		],
+		"mempool": "/home/blockchain/.tkeycoin2/mempool.dat"
+	},
+	"node":{
+		"blockchain": "test"
+	},
+	"logs":{
+		"sinks":{
+			"console":{
+				"type":"console"
+			}
+		},
+		"loggers":{
+			"*":{
+				"sink":"console",
+				"level":"info"
+			}
+		}
+	}
+}

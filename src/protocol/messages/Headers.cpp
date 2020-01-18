@@ -1,0 +1,73 @@
+//  Copyright (c) 2017-2020 TKEY DMCC LLC & Tkeycoin Dao. All rights reserved.
+//  Website: www.tkeycoin.com
+//
+//  Permission is hereby granted, free of charge, to any person obtaining a copy
+//  of this software and associated documentation files (the "Software"), to deal
+//  in the Software without restriction, including without limitation the rights
+//  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+//  copies of the Software, and to permit persons to whom the Software is
+//  furnished to do so, subject to the following conditions:
+//
+//  The above copyright notice and this permission notice shall be included in
+//  all copies or substantial portions of the Software.
+//
+//  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+//  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+//  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+//  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+//  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+//  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+//  THE SOFTWARE.
+
+
+// Headers.cpp
+
+#include <serialization/SerializationWrapper.hpp>
+#include <serialization/SArr.hpp>
+#include "Headers.hpp"
+
+REGISTER_MESSAGE(Headers)
+
+void protocol::message::Headers::Serialize(std::ostream& os) const
+{
+	::Serialize(os, size_and_(_headers));
+}
+
+void protocol::message::Headers::Unserialize(std::istream& is)
+{
+	uintV size;
+	::Unserialize(is, size);
+	_headers.reserve(size);
+
+	decltype(_headers)::value_type header;
+	uintV txCount;
+
+	while (size--)
+	{
+		::Unserialize(is, header);
+		::Unserialize(is, txCount);
+
+		_headers.push_back(std::move(header));
+	}
+}
+
+SVal protocol::message::Headers::toSVal() const
+{
+	SObj obj;
+	obj.emplace("COMMAND", command());
+	SArr payload;
+	for (auto& header : _headers)
+	{
+		payload.emplace_back(header->toSVal());
+	}
+	obj.emplace("payload", std::move(payload));
+	return obj;
+}
+
+void protocol::message::Headers::apply(
+	const std::shared_ptr<Node>& node,
+	const std::shared_ptr<Peer>& peer
+) const
+{
+	peer->ReceiveHeaders(node, _headers);
+}

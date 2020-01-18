@@ -1,0 +1,79 @@
+//  Copyright (c) 2017-2019 Tkeycoin Dao. All rights reserved.
+//  Copyright (c) 2019-2020 TKEY DMCC LLC & Tkeycoin Dao. All rights reserved.
+//  Website: www.tkeycoin.com
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
+
+
+// WsContext.hpp
+
+
+#pragma once
+
+#include "../http/HttpContext.hpp"
+#include "WsFrame.hpp"
+#include "../../sessions/Session.hpp"
+
+class WsContext final : public HttpContext
+{
+protected:
+	bool _established;
+	std::shared_ptr<WsFrame> _frame;
+	std::weak_ptr<Session> _session;
+	std::string _key;
+	std::function<void(WsContext&)> _establishHandler;
+
+public:
+	WsContext(const std::shared_ptr<Connection>& connection)
+	: HttpContext(connection)
+	, _established(false)
+	{};
+	virtual ~WsContext() = default;
+
+	void setEstablished();
+	bool established()
+	{
+		return _established;
+	}
+
+	const std::string& key();
+
+	std::shared_ptr<WsFrame> getFrame()
+	{
+		return _frame;
+	}
+	void setFrame(const std::shared_ptr<WsFrame>& frame)
+	{
+		_frame = frame;
+	}
+	void resetFrame()
+	{
+		_frame.reset();
+	}
+
+	void assignSession(const std::shared_ptr<Session>& session)
+	{
+		_session = session;
+	}
+	std::shared_ptr<Session> getSession()
+	{
+		return _session.lock();
+	}
+	void resetSession()
+	{
+		_session.reset();
+	}
+
+	void addEstablishedHandler(std::function<void(WsContext&)>);
+};

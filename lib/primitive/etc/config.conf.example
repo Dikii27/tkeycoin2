@@ -1,0 +1,201 @@
+/*****************************************************************************
+ * The server config is based on the libconfig++library                         *
+ * You can see the syntax description in Russian on Habr:                 *
+ *   https://habrahabr.ru/post/148948/#para-configг                          *
+ * Library repository:                                                   *
+ *   https://github.com/hyperrealm/libconfig                                 *
+ *****************************************************************************/
+
+/*****************************************************************************
+ * The kernel parameters of the application                                             *
+ *****************************************************************************/
+core = {
+	workers = 4; // Number of worker threads
+	timeZone = "Europe/Moscow"; // The time zone of the server
+	processName = "primitive"; // Name of the process in the Manager
+};
+
+/*****************************************************************************
+ * List of active transports                                             *
+ *****************************************************************************/
+transports = (
+	{
+		// The name of the transport. Arbitrary alphanumeric identifier
+		name = "transport1";
+
+		// Type of transport
+		//   Available value: http, websocket, packet
+		type = "http";
+
+		// Secure connection flag
+		//   When enabled, traffic is turned around в SSL.
+		//   It is not recommended because a self-signed certificate is used
+		secure = false;
+
+		// The parameters for the listening socket
+
+		host = "0.0.0.0";   // IP
+		port = 54321;       // Port
+
+	}
+);
+
+/*****************************************************************************
+ * Configuration for connecting to databases                             *
+ *****************************************************************************/
+databases = (
+	{
+		// Name of the database connection pool
+		//   Unique alphanumeric identifier
+
+		name = "common";
+
+		// The type of database server
+
+		//   Implemented: mysql
+
+		type = "mysql";
+
+		// Parameters for connecting to the database server
+
+		dbserver = "127.0.0.1";               // The IP of the database server (if TCP connect)
+
+		dbport = 3306;                        // DB server port (for TCP connection)
+
+		dbsocket = "/run/mysqld/mysqld.sock"; // Full socket name (for UNIX-socket)
+
+
+		// Access parameters
+
+		dbuser = "test"; // User name
+
+		dbpass = "test"; // User password
+
+		dbname = "test"; // The name of the default database
+
+
+		// Connection parameter
+
+		dbcharset = "utf8mb4"; // Encoding
+		dbtimezone = "+03:00"; // Time zone
+
+	}
+);
+
+/*****************************************************************************
+ * List of active services                                               *
+ *****************************************************************************/
+services = (
+	{
+		// Service name
+
+		name="status";
+
+		// Type of service
+
+		type="status";
+
+		// Description of service parts for working with 3rd-party applications
+
+		//   Each part implements logic for a specific third party.
+
+		//   Can be repeated to work on different transport+endpoints
+
+		parts = (
+			{
+				// Type of service component
+
+				//   Depends on the implementation of the service
+
+				type = "client";
+
+				// The transport used
+
+				//   The ID of the transport that is described in the config
+
+				transport = "transport1";
+
+				// Initial part of the routing URI
+
+				//   Only makes sense for http-based transport
+
+				uri = "/status";
+			}
+		);
+	}
+);
+
+/*****************************************************************************
+ * Configuration of external applications
+                                           *
+ *****************************************************************************/
+applications = (
+	{
+		// Type of 3rd-party app
+		type = "admin";
+
+    // application ID
+    		// Within a single server, it is assumed that the appId is unique,
+    		// regardless of the type. From the server's point of view, this is an index.
+		appId = "statusOfShard";
+
+		// Application key or secret for generating request signatures
+
+		appKey = "*seсret*";
+
+		// Flag of a production application (not a test one)
+
+		isProduction = false;
+	}
+);
+
+/*****************************************************************************
+ * Configuration of the logging system                                       *
+ *****************************************************************************/
+logs = {
+	// Configuration of syncs
+
+	sinks = (
+		{
+			// Name of sink
+
+			name  = "file";
+
+			// Type of sink
+			type = "file"; // Output logs to a file
+
+			// Log folder
+			directory = "/opt/primitive/logs/";
+
+			// The name of the log file
+
+			directory = "primitive.log";
+
+			// Re-opening the log file (for rotation) is performed using the USR1 signal
+
+		},
+		{
+			name  = "console";
+			type = "console"; // Output to the console
+		}
+	);
+
+	// Logger configuration
+	loggers = (
+		{
+			// Name of the logger
+			name = "*"; // The name ' * ' specifies the default config
+
+
+			// Sink used by the logger
+
+			sink = "console";
+
+      // Log detail level
+
+      // Possible values: trace, debug, info, warn, error, crit, off
+
+			level = "info";
+		}
+	);
+};

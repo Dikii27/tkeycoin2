@@ -1,0 +1,153 @@
+//  Copyright (c) 2017-2019 Tkeycoin Dao. All rights reserved.
+//  Copyright (c) 2019-2020 TKEY DMCC LLC & Tkeycoin Dao. All rights reserved.
+//  Website: www.tkeycoin.com
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
+
+
+// Services.cpp
+
+
+#include "Services.hpp"
+#include "../thread/TaskManager.hpp"
+
+void Services::add(const Setting& setting, bool replace)
+{
+	std::string name;
+	if (!setting.lookupValue("name", name) || name.empty())
+	{
+		throw std::runtime_error("Field name undefined");
+	}
+
+	if (!replace)
+	{
+		std::lock_guard<std::mutex> lockGuard(getInstance()._mutex);
+		if (getInstance()._registry.find(name) != getInstance()._registry.end())
+		{
+			throw std::runtime_error(std::string("Already exists service with the same name ('") + name + "')");
+		}
+	}
+
+	auto entity = ServiceFactory::create(setting);
+
+	{
+		std::lock_guard<std::mutex> lockGuard(getInstance()._mutex);
+
+		if (!replace)
+		{
+			auto i = getInstance()._registry.find(entity->name());
+			if (i != getInstance()._registry.end())
+			{
+				getInstance()._registry.erase(i);
+			}
+		}
+
+		getInstance()._registry.emplace(entity->name(), entity);
+	}
+
+	TaskManager::enqueue(
+		[entity]
+		{
+			activate(entity);
+		},
+		"Activate service"
+	);
+}
+
+std::shared_ptr<Service> Services::get(const std::string& name)
+{
+	std::lock_guard<std::mutex> lockGuard(getInstance()._mutex);
+
+	auto i = getInstance()._registry.find(name);
+	if (i == getInstance()._registry.end())
+	{
+		return std::shared_ptr<Service>();
+	}
+
+	return i->second;
+}
+
+void Services::del(const std::string& name)
+{
+	std::lock_guard<std::mutex> lockGuard(getInstance()._mutex);
+
+	auto i = getInstance()._registry.find(name);
+	if (i == getInstance()._registry.end())
+	{
+		return;
+	}
+
+	i->second->deactivate();
+
+	getInstance()._registry.erase(i);
+}
+
+void Services::activate(const std::shared_ptr<Service>& service, std::chrono::seconds delay)
+{
+	{
+		std::lock_guard<std::mutex> lockGuard(getInstance()._mutex);
+
+		auto i = getInstance()._registry.find(service->name());
+
+		if (i == getInstance()._registry.end() || i->second != service)
+		{
+			return;
+		}
+	}
+
+	try
+	{
+		service->activate();
+	}
+	catch (const std::exception& exception)
+	{
+		Log("Services").warn(exception.what());
+
+		service->deactivate();
+
+		if (delay < std::chrono::seconds(30))
+		{
+			delay += std::chrono::seconds(1);
+		}
+
+		TaskManager::enqueue(
+			[service, delay]
+			{
+				activate(service, delay);
+			},
+			delay,
+			"Retry activate service"
+		);
+	}
+}
+
+void Services::activateAll()
+{
+	std::lock_guard<std::mutex> lockGuard(getInstance()._mutex);
+
+	for (const auto& i : getInstance()._registry)
+	{
+		i.second->activate();
+	}
+}
+
+void Services::deactivateAll()
+{
+	std::lock_guard<std::mutex> lockGuard(getInstance()._mutex);
+
+	for (const auto& i : getInstance()._registry)
+	{
+		i.second->deactivate();
+	}
+}

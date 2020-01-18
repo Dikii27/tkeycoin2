@@ -1,0 +1,152 @@
+//  Copyright (c) 2017-2019 Tkeycoin Dao. All rights reserved.
+//  Copyright (c) 2019-2020 TKEY DMCC LLC & Tkeycoin Dao. All rights reserved.
+//  Website: www.tkeycoin.com
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
+
+
+// Action.hpp
+
+
+#pragma once
+
+
+#include <cstdint>
+#include "../utils/Context.hpp"
+#include "../serialization/SObj.hpp"
+#include "../transport/ServerTransport.hpp"
+#include "Service.hpp"
+
+class Action
+{
+protected:
+	using Id = int64_t;
+
+	std::string _actionName;
+
+	std::shared_ptr<Service> _service;
+	std::shared_ptr<ServicePart> _servicePart;
+	std::shared_ptr<Context> _context;
+	SVal _data;
+	Id _requestId;
+	Id _lastConfirmedEvent;
+	Id _lastConfirmedResponse;
+	mutable bool _answerSent;
+
+	virtual void prepare() {};
+	virtual void validate() = 0;
+	virtual void execute() = 0;
+
+public:
+	Action() = delete;
+	Action(const Action&) = delete;
+	Action& operator=(const Action&) = delete;
+	Action(Action&&) noexcept = delete;
+	Action& operator=(Action&&) noexcept = delete;
+
+	Action(
+		const std::shared_ptr<ServicePart>& servicePart,
+		std::shared_ptr<Context> context,
+		const SVal& input
+	);
+	virtual ~Action() = default;
+
+	inline auto name()
+	{
+		return _actionName;
+	}
+
+	bool doIt(const std::string& where, std::chrono::steady_clock::time_point beginExecTime = std::chrono::steady_clock::now());
+
+	std::shared_ptr<ServicePart> servicePart() const
+	{
+		return _servicePart;
+	}
+
+	std::shared_ptr<Service> service() const
+	{
+		return _service;
+	}
+
+	virtual SObj response(SVal&& data) const;
+	inline SObj response() const
+	{
+		return response(SVal());
+	}
+
+	virtual SObj error(const std::string& message, SVal&& data) const;
+	virtual SObj error(const std::string& message) const
+	{
+		return error(message, SVal());
+	}
+
+	inline auto requestId() const
+	{
+		return _requestId;
+	}
+
+	inline auto lastConfirmedEvent() const
+	{
+		return _lastConfirmedEvent;
+	}
+
+	inline auto lastConfirmedResponse() const
+	{
+		return _lastConfirmedResponse;
+	}
+};
+
+#include "ActionFactory.hpp"
+
+#define REGISTER_ACTION(Type,ActionName) const Dummy ActionName::__dummy = \
+	ActionFactory::reg(                                                                         \
+		#Type,                                                                                  \
+		ActionName::create                                                                      \
+	);
+
+#define DECLARE_ACTION_WITH_BASE(ActionName, Base) \
+public:                                                                                         \
+    ActionName() = delete;                                                                      \
+	ActionName(ActionName&&) noexcept = delete;                                                 \
+	ActionName(const ActionName&) = delete;                                                     \
+	ActionName& operator=(ActionName&&) noexcept = delete;                                      \
+	ActionName& operator=(const ActionName&) = delete;                                          \
+                                                                                                \
+private:                                                                                        \
+    ActionName(                                                                                 \
+		const std::shared_ptr<::ServicePart>& servicePart,                                      \
+		const std::shared_ptr<Context>& context,                                                \
+		const SVal& input                                                                       \
+	)                                                                                           \
+    : Base(servicePart, context, input)                                                         \
+    {}                                                                                          \
+                                                                                                \
+public:                                                                                         \
+    ~ActionName() override = default;                                                           \
+                                                                                                \
+private:                                                                                        \
+    void validate() override;                                                                   \
+    void execute() override;                                                                    \
+                                                                                                \
+    static auto create(                                                                         \
+		const std::shared_ptr<::ServicePart>& servicePart,                                      \
+		const std::shared_ptr<Context>& context,                                                \
+		const SVal& input                                                                       \
+	)                                                                                           \
+    {                                                                                           \
+        return std::shared_ptr<Action>(new ActionName(servicePart, context, input));            \
+    }                                                                                           \
+    static const Dummy __dummy;
+
+#define DECLARE_ACTION(ActionName) DECLARE_ACTION_WITH_BASE(ActionName, Action)
