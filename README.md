@@ -17,18 +17,18 @@ For the easiest deployment of Tkeycoin network 1.0, please use tkeycoin/tkeycoin
 
 Connect to the server via ssh and execute commands:
 
-```wget https://tkeycoin.com/tkeycoin-x.x.x.deb```
-```sudo apt-get install ./tkeycoin-x.x.x.deb```
-```tkeycoind start```
+1. ```wget https://tkeycoin.com/tkeycoin-x.x.x.deb```
+2. ```sudo apt-get install ./tkeycoin-x.x.x.deb```
+3. ```tkeycoind start```
 
 
 where, x.x.x is the version number of the application, for example, tkeycoin-1.1.6.deb
 
 `Example:` 
 
-```wget https://tkeycoin.com/tkeycoin-1.1.6.deb```
-```sudo apt-get install ./tkeycoin-1.1.6.deb```
-```tkeycoind start```
+1. ```wget https://tkeycoin.com/tkeycoin-1.1.6.deb```
+2. ```sudo apt-get install ./tkeycoin-1.1.6.deb```
+3. ```tkeycoind start```
 
 The deb-package will automatically configure the Tkeycoin work environment, install the full tkeycoin node on your server, and add Postgresql to work with the Protocol.
 
